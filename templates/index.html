@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zerodha Chatbot</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            position: relative;
+        }
+        .container {
+            width: 350px;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            text-align: center;
+        }
+        h2 {
+            color: #333;
+        }
+        .tab {
+            display: none;
+        }
+        .tab.active {
+            display: block;
+        }
+        input[type="text"], input[type="password"], input[type="email"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .message {
+            margin-top: 20px;
+            color: black;
+        }
+        .toggle-btn {
+            color: #007bff;
+            cursor: pointer;
+            font-size: 0.9em;
+            margin-top: 10px;
+            display: inline-block;
+        }
+        .toggle-btn:hover {
+            text-decoration: underline;
+        }
+        .chat-container {
+            width: 100%;
+            max-width: 500px;
+            margin: auto;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-family: Arial, sans-serif;
+        }
+
+        .message-box {
+            height: 400px; /* Adjust as needed */
+            overflow-y: auto; /* Add scroll functionality */
+            padding: 10px;
+            border: 1px solid #ddd;
+            margin-bottom: 10px; /* Adjusted for better spacing */
+            border-radius: 8px;
+        }
+
+        .messages p {
+            margin: 5px 0;
+            word-wrap: break-word;
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            margin-top: -26px; /* Fine-tuned for better alignment */
+        }
+
+        .message-input {
+            width: calc(100% - 80px); /* Adjusted for button size */
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 5px;
+        }
+
+        .send-button {
+            padding: 10px 20px;
+            background-color: green;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .send-button:hover {
+            background-color: darkgreen;
+        }
+
+        #chatIcon {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 100px;
+            padding: 10px;
+            background-color: green;
+            color: white;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+        }
+
+        #chatIcon i {
+            font-size: 24px;
+        }
+
+        #chatTab {
+            display: none; /* Initially hidden */
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 350px;
+            height: 500px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        /* Close Button Styling */
+        #closeChat {
+            position: fixed;
+            top: 20px;  
+            right: 20px; 
+            width: 50px; 
+            height: 35px; 
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 15%;
+            padding: 5px 10px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        /* Close Button Hover Effect */
+        #closeChat:hover {
+            background-color: darkgreen;
+        }
+
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Zerodha Chatbot</h2>
+
+    <!-- Registration Form -->
+    <div id="registerTab" class="tab active">
+        <h3>Register</h3>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="phonenumber" placeholder="Phone Number" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="registerUser()">Register</button>
+        <div class="message" id="registerErrorMessage"></div>
+        <div class="toggle-btn" onclick="switchTab('loginTab')">Already have an account? Login here</div>
+    </div>
+
+    <!-- Login Form -->
+    <div id="loginTab" class="tab">
+        <h3>Login</h3>
+        <input type="text" id="loginUsername" placeholder="Username" required>
+        <input type="password" id="loginPassword" placeholder="Password" required>
+        <button onclick="loginUser()">Login</button>
+        <div class="message" id="loginErrorMessage"></div>
+        <div class="toggle-btn" onclick="switchTab('registerTab')">Don't have an account? Register here</div>
+    </div>
+
+    <!-- Chat Icon -->
+    <button id="chatIcon" onclick="openChat()">
+        <i class="fas fa-comments"></i>
+    </button>
+
+    <!-- Chat Box -->
+    <div id="chatTab" class="chat-container tab">
+        <h2>Chat with Zerodha Bot</h2>
+        
+        <!-- Close Button -->
+        <button id="closeChat" onclick="closeChat()">Close</button>
+        
+        <!-- Message History Container -->
+        <div class="message-box">
+            <div class="messages" id="chatHistory">
+                <!-- Existing messages will be appended here by JavaScript -->
+            </div>
+        </div>
+        
+        <!-- Wrap the input and button in a div -->
+        <div class="input-container">
+            <input type="text" id="userText" placeholder="Type a message..." class="message-input">
+            <button onclick="sendMessage()" class="send-button">Send</button>
+        </div>
+</div>
+
+
+
+
+<script>
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+    }
+
+    async function registerUser() {
+        const data = {
+            username: document.getElementById('username').value,
+            email: document.getElementById('email').value,
+            phonenumber: document.getElementById('phonenumber').value,
+            password: document.getElementById('password').value
+        };
+        
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        const registerErrorMessage = document.getElementById('registerErrorMessage');
+        registerErrorMessage.innerText = result.error || result.message;
+        registerErrorMessage.style.color = result.error ? "red" : "green";
+
+        if (!result.error) switchTab('loginTab');
+    }
+
+    async function loginUser() {
+        const data = {
+            username: document.getElementById('loginUsername').value,
+            password: document.getElementById('loginPassword').value
+        };
+        
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        });
+        
+        const result = await response.json();
+        const loginErrorMessage = document.getElementById('loginErrorMessage');
+        loginErrorMessage.innerText = result.error || result.message;
+        loginErrorMessage.style.color = result.error ? "red" : "green";
+
+        if (!result.error) {
+            localStorage.setItem('unique_id', result.unique_id);
+            switchTab('chatTab');
+        }
+    }
+    async function initializeChat() {
+    const unique_id = localStorage.getItem('unique_id');
+    console.log(unique_id)
+
+    const response = await fetch('/initial', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({unique_id:unique_id })
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        document.getElementById('chatHistory').innerHTML += `<div><strong>assistant:</strong> ${data.message}</div>`;
+    } else {
+        console.error("Failed to fetch initial message", response.status, response.statusText);
+    }
+}
+
+
+    async function openChat() {
+        document.getElementById('chatTab').style.display = 'block';
+        initializeChat(); // Fetch the initial message
+    }
+
+    function closeChat() {
+    document.getElementById('chatTab').style.display = 'none'; // Hide the chat box
+    document.getElementById('chatIcon').style.display = 'block'; // Show the chat icon
+    }
+    async function sendMessage() {
+        const userText = document.getElementById('userText').value;
+        const unique_id = localStorage.getItem('unique_id');
+
+        const response = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user_text: userText, unique_id:unique_id })
+        });
+        
+        const result = await response.json();
+        document.getElementById('chatHistory').innerHTML += `<div><strong>You:</strong> ${userText}</div>`;
+        document.getElementById('chatHistory').innerHTML += `<div><strong>assistant:</strong> ${result.message}</div>`;
+        document.getElementById('userText').value = '';
+    }
+</script>
+
+</body>
+</html>
